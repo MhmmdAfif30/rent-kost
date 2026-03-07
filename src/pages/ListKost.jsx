@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Tag, Space, Button, Card, Typography, Input, List, Badge } from "antd";
 import {
   PlusOutlined,
@@ -9,15 +9,21 @@ import {
   InfoCircleOutlined,
 } from "@ant-design/icons";
 
+import { useNavigate } from "react-router-dom";
+
 const { Title, Text, Paragraph } = Typography;
 
 const KostList = () => {
+  const navigate = useNavigate();
+  const [searchText, setSearchText] = useState("");
+
   const sessionData = localStorage.getItem("session");
   const userRole = sessionData ? JSON.parse(sessionData).roleName : "Guest";
   const isAdminOrOwner = userRole === "Admin" || userRole === "Owner";
+
   const dataSource = [
     {
-      key: "1",
+      key: "5",
       nama: "Kost Bahagia 1",
       alamat: "Jl. Mawar No. 10, Jakarta Pusat",
       tipe: "Putra",
@@ -36,7 +42,6 @@ const KostList = () => {
       image:
         "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=400",
     },
-
     {
       key: "3",
       nama: "Kost Exclusive Menteng",
@@ -48,6 +53,16 @@ const KostList = () => {
         "https://images.unsplash.com/photo-1493809842364-78817add7ffb?q=80&w=400",
     },
   ];
+
+  const filteredData = dataSource.filter(
+    (item) =>
+      item.nama.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.alamat.toLowerCase().includes(searchText.toLowerCase()),
+  );
+
+  const handleDetail = (item) => {
+    navigate(`/detail-kost/${item.key}`, { state: { kost: item } });
+  };
 
   const getTipeColor = (tipe) => {
     return tipe === "Putra" ? "blue" : tipe === "Putri" ? "magenta" : "purple";
@@ -77,6 +92,7 @@ const KostList = () => {
             placeholder="Cari lokasi atau nama..."
             style={{ width: 250 }}
             size="large"
+            onChange={(e) => setSearchText(e.target.value)}
           />
 
           {isAdminOrOwner && (
@@ -87,10 +103,9 @@ const KostList = () => {
         </Space>
       </div>
 
-      {/* Grid List Section */}
       <List
         grid={{ gutter: 24, xs: 1, sm: 2, md: 2, lg: 3, xl: 3, xxl: 4 }}
-        dataSource={dataSource}
+        dataSource={filteredData}
         renderItem={(item) => (
           <List.Item>
             <Badge.Ribbon
@@ -104,21 +119,34 @@ const KostList = () => {
                     alt={item.nama}
                     src={item.image}
                     style={{ height: 200, objectFit: "cover" }}
+                    onClick={() => handleDetail(item)}
                   />
                 }
                 actions={[
-                  isAdminOrOwner && <EditOutlined key="edit" title="Edit" />,
-                  <InfoCircleOutlined key="detail" title="Detail" />,
+                  isAdminOrOwner && (
+                    <EditOutlined
+                      key="edit"
+                      onClick={() => console.log("Edit", item.key)}
+                    />
+                  ),
+                  <InfoCircleOutlined
+                    key="detail"
+                    onClick={() => handleDetail(item)}
+                  />,
                   isAdminOrOwner && (
                     <DeleteOutlined
                       key="delete"
                       style={{ color: "#ff4d4f" }}
-                      title="Hapus"
+                      onClick={() => alert(`Hapus ${item.nama}?`)}
                     />
                   ),
-                ].filter(Boolean)} 
+                ].filter(Boolean)}
               >
-                <Space direction="vertical" style={{ width: "100%" }}>
+                <Space
+                  direction="vertical"
+                  style={{ width: "100%" }}
+                  onClick={() => handleDetail(item)}
+                >
                   <div
                     style={{
                       display: "flex",
@@ -131,7 +159,9 @@ const KostList = () => {
                     </Tag>
                     <Text strong style={{ color: "#1890ff", fontSize: "16px" }}>
                       Rp {item.harga.toLocaleString("id-ID")}
-                      <small>/bln</small>
+                      <small style={{ fontSize: "12px", fontWeight: "normal" }}>
+                        /bln
+                      </small>
                     </Text>
                   </div>
                   <Title level={5} style={{ margin: "8px 0 4px" }}>

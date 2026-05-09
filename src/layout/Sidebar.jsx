@@ -1,7 +1,7 @@
 import React from 'react'
 import { Layout } from 'antd';
 import LayoutMenu from './Menu';
-import { getSessionData } from '../components/Global/Formatter'; // Pastikan path import benar
+import { getSessionData } from '../components/Global/Formatter'; 
 
 const { Sider } = Layout;
 
@@ -11,8 +11,8 @@ const LayoutSidebar = () => {
     const session = getSessionData();
     const user = session?.user;
 
-    const isAdmin = user?.user_id === 1; 
-    const isOwner = user?.role === 'owner';
+    const isAdmin = user?.user_id === 1 && user?.role === 'admin';
+    const isOwner = user?.user_id === 2 && user?.role === 'owner';
 
     if (!isAdmin && !isOwner) {
         return null;

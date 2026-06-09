@@ -73,7 +73,7 @@ const SignIn = () => {
                     message: res?.message || 'Selamat datang!',
                 });
 
-                navigate('/dashboard/home');
+                navigate('/detail-kost');
             }
         } catch (err) {
             // hanya handle invalid captcha disini

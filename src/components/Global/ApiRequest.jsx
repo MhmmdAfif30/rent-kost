@@ -1,7 +1,7 @@
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
-const baseURL = process.env.REACT_API_SERVER;
+const baseURL = process.env.REACT_APP_API_SERVER;
 
 const instance = axios.create({
     baseURL,

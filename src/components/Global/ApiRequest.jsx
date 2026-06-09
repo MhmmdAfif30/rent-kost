@@ -1,7 +1,7 @@
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
-const baseURL = import.meta.env.VITE_API_SERVER;
+const baseURL = process.env.REACT_API_SERVER;
 
 const instance = axios.create({
     baseURL,
@@ -59,10 +59,13 @@ instance.interceptors.response.use(
 
 async function ApiRequest({ method = 'GET', params = {}, prefix = '/', token = true } = {}) {
     const isFormData = params instanceof FormData;
-
+    
+    // Pastikan prefix dimulai dengan '/' jika baseURL tidak berakhiran '/'
+    const url = prefix.startsWith('/') ? prefix : `/${prefix}`;
+    
     const request = {
         method,
-        url: prefix,
+        url: url,  // Gunakan url yang sudah diproses
         data: params,
         headers: {
             'Accept-Language': 'en_US',

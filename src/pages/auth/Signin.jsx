@@ -24,20 +24,22 @@ const SignIn = () => {
     };
 
     // ambil captcha
-    const fetchCaptcha = async () => {
-        try {
-            const res = await SendRequest({
-                method: 'get',
-                prefix: 'auth/generate-captcha',
-                token: false,
-            });
-
-            setCaptchaSvg(res.data?.data?.svg || '');
-            setCaptchaText(res.data?.data?.text || '');
-        } catch (err) {
-            console.error('Error fetching captcha:', err);
+   const fetchCaptcha = async () => {
+    try {
+        const res = await SendRequest({
+            method: 'get',
+            prefix: 'auth/generate-captcha', 
+            token: false,
+        });
+        
+        if (res?.data?.data) {
+            setCaptchaSvg(res.data.data.svg || '');
+            setCaptchaText(res.data.data.text || '');
         }
-    };
+    } catch (err) {
+        console.error('Error fetching captcha:', err);
+    }
+};
 
     useEffect(() => {
         fetchCaptcha();
@@ -47,16 +49,16 @@ const SignIn = () => {
         setLoading(true);
         try {
             const res = await SendRequest({
-                method: 'post',
-                prefix: 'auth/login',
-                params: {
-                    identifier: values.identifier,
-                    password: values.password,
-                    captcha: values.captcha,
-                    captchaText: captchaText,
-                },
-                withCredentials: true,
-            });
+    method: 'post',
+    prefix: 'auth/login',
+    params: {
+        identifier: values.identifier,
+        password: values.password,
+        captcha: values.captcha,
+        captchaText: captchaText,
+    },
+    withCredentials: true,
+});
 
             const user = res?.data?.data?.user || res?.user;
             const accessToken = res?.data?.data?.accessToken || res?.tokens?.accessToken;

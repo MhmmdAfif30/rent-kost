@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const RegistrationRequest = async ({ method, prefix, params, headers = {} }) => {
-    const baseURL = `${import.meta.env.VITE_API_SERVER}`;
+    const baseURL = `${import.meta.env.REACT_APP_API_SERVER}`;
 
     try {
         const response = await axios({

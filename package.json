@@ -8,6 +8,7 @@
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^13.5.0",
     "antd": "^6.3.1",
+    "axios": "^1.17.0",
     "crypto-js": "^4.2.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.577.0",
@@ -16,6 +17,7 @@
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.13.1",
     "react-scripts": "5.0.1",
+    "sweetalert2": "^11.26.25",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

@@ -1,5 +1,6 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { NotifAlert } from '../../components/Global/ToastNotif';
 import {
   Tag,
   Space,
@@ -11,6 +12,7 @@ import {
   Image,
   Divider,
 } from "antd";
+
 import {
   EnvironmentOutlined,
   ArrowLeftOutlined,
@@ -34,6 +36,16 @@ const DetailKost = () => {
       </div>
     );
   }
+
+  const handleBookingClick = () => {
+    NotifAlert({
+      icon: 'error',
+      title: 'Harap Login',
+      message: 'Silahkan Login Terlebih Dahulu',
+    });
+    navigate('/signin');
+  };
+
 
   const photo_room = [
     item.image,
@@ -117,33 +129,12 @@ const DetailKost = () => {
               type="primary"
               size="large"
               icon={<ContainerOutlined />}
-              style={{
-                backgroundColor: "grey",
-                flex: 1,
-              }}
+              style={{ backgroundColor: "grey", flex: 1 }}
+              onClick={handleBookingClick} 
             >
-              {/* onClick=
-              {() => {
-                handleBookingClick(roomData);
-              }} */}
               Booking
             </Button>
 
-            <Button
-              type="primary"
-              size="large"
-              icon={<WhatsAppOutlined />}
-              style={{
-                backgroundColor: "#25D366",
-                borderColor: "#25D366",
-                flex: 1,
-              }}
-              // onClick={() =>
-              //   window.open(`https://wa.me/${contact_phone}`, "_blank")
-              // }
-            >
-              WhatsApp
-            </Button>
           </div>
         </Col>
       </Row>

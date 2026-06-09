@@ -10,7 +10,7 @@ import {
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 
-import { formatIDR } from '../components/Global/Formatter';
+import { formatIDR } from '../../components/Global/Formatter';
 
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
@@ -20,10 +20,10 @@ import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
 let DefaultIcon = L.icon({
-    iconUrl: icon,
-    shadowUrl: iconShadow,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41]
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41]
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
@@ -162,19 +162,18 @@ const KostList = () => {
           />
         </Col>
 
-        {/* KOLOM KANAN: PETA (STICKY) */}
         <Col xs={24} lg={10} xl={9}>
-          <div style={{ 
-            position: "sticky", 
-            top: 24, 
-            height: "calc(100vh - 48px)", 
-            borderRadius: "12px", 
+          <div style={{
+            position: "sticky",
+            top: 24,
+            height: "calc(100vh - 48px)",
+            borderRadius: "12px",
             overflow: "hidden",
             boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
           }}>
-            <MapContainer 
-              center={[-6.2000, 106.8166]} 
-              zoom={11} 
+            <MapContainer
+              center={[-6.2000, 106.8166]}
+              zoom={11}
               style={{ height: "100%", width: "100%" }}
             >
               <TileLayer
@@ -184,8 +183,8 @@ const KostList = () => {
               {filteredData.map((item) => (
                 <Marker key={item.key} position={item.coords}>
                   <Popup>
-                    <strong>{item.nama}</strong><br/>
-                    {item.alamat}<br/>
+                    <strong>{item.nama}</strong><br />
+                    {item.alamat}<br />
                     <Button type="link" size="small" onClick={() => handleDetail(item)}>Lihat Detail</Button>
                   </Popup>
                 </Marker>

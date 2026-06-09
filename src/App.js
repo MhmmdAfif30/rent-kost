@@ -5,27 +5,27 @@ import MainLayout from "./layout/Main";
 
 import Home from "./pages/home/Home";
 
-import KostList from "../src/pages/ListKost";
-import DetailKost from "./pages/DetailKost";
+//KOST
+import KostList from "../src/pages/kost/ListKost";
+import DetailKost from "./pages/kost/DetailKost";
+
+import Login from "./pages/auth/Signin"
+
+
 
 const App = () => {
-  return (
-    <BrowserRouter
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-      }}
-    >
-      <BreadcrumbProvider>
-        <Routes>
-          <Route element={<MainLayout />}>
-            <Route path="/kost" element={<KostList />} />
-            <Route path="/detail-kost/:id" element={<DetailKost />} />
-          </Route>
-        </Routes>
-      </BreadcrumbProvider>
-    </BrowserRouter>
-  );
+    return (
+        <BrowserRouter>
+            <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<Navigate to="/kost" replace />} />
+                <Route path="/signin" element={<Login />} />
+
+                <Route path="/kost" element={<KostList />} />
+                <Route path="/detail-kost/:id" element={<DetailKost />} />
+            </Routes>
+        </BrowserRouter>
+    );
 };
 
 export default App;

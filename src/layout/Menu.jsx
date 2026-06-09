@@ -23,19 +23,19 @@ const allItems = [
         icon: <HomeOutlined style={{fontSize:'19px'}} />,
         label: <Link to="/dashboard/home" className='fontMenus'>Home</Link>,
     },
-    { 
-        key: 'kost',
-        icon: <DatabaseOutlined style={{fontSize:'19px'}} />,
-        label: 'Kost',
-        children: [
-             {
-                key: 'kost',
-                icon: <DatabaseOutlined style={{fontSize:'19px'}} />,
-                label: <Link to="/kost/management-kost">Management Kost</Link>,
-            },
-        ],
+    // { 
+    //     key: 'kost',
+    //     icon: <DatabaseOutlined style={{fontSize:'19px'}} />,
+    //     label: 'Kost',
+    //     children: [
+    //          {
+    //             key: 'kost',
+    //             icon: <DatabaseOutlined style={{fontSize:'19px'}} />,
+    //             label: <Link to="/kost/management-kost">Management Kost</Link>,
+    //         },
+    //     ],
         
-    },
+    // },
     {
         key: 'finance',
         icon: <DatabaseOutlined style={{fontSize:'19px'}} />,

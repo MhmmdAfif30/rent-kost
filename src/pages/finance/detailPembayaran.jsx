@@ -321,6 +321,7 @@ const DetailPembayaran = (props) => {
 
     const paymentTypeOptions = [
         { value: 'virtual_account', label: 'Virtual Account' },
+        { value: 'midtrans', label: 'Midtrans' },
     ];
 
     const isReadOnly = readOnly || actionMode === 'detail';

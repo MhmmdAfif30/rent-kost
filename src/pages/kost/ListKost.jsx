@@ -1,198 +1,292 @@
-import React, { useState } from "react";
-import { Tag, Space, Button, Card, Typography, Input, List, Badge, Select, Row, Col } from "antd";
+import React, { useState, useEffect } from "react";
 import {
-  PlusOutlined,
+  Tag, Space, Button, Card, Typography, Input, List, Badge,
+  Select, Row, Col, Spin, Empty, Pagination, Tooltip, message
+} from "antd";
+import {
   EditOutlined,
   DeleteOutlined,
-  SearchOutlined,
   EnvironmentOutlined,
-  InfoCircleOutlined,
+  HeartOutlined,
+  HeartFilled,
+  EyeOutlined
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 
 import { formatIDR } from '../../components/Global/Formatter';
+import { listKost } from "../../api/kost";
 
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+const { Title, Text } = Typography;
 
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+// Komponen untuk menampilkan fasilitas dari database
+const FacilitiesDisplay = ({ facilities }) => {
+  if (!facilities || facilities === "") {
+    return (
+      <div style={{ marginTop: 12, paddingTop: 8, borderTop: "1px solid #f0f0f0", height: 40 }}>
+        <Text type="secondary" style={{ fontSize: "12px" }}>
+          Tidak ada fasilitas
+        </Text>
+      </div>
+    );
+  }
 
-let DefaultIcon = L.icon({
-  iconUrl: icon,
-  shadowUrl: iconShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41]
-});
-L.Marker.prototype.options.icon = DefaultIcon;
+  let facilityList = [];
 
-const { Title, Text, Paragraph } = Typography;
-const { Option } = Select;
+  if (typeof facilities === 'string') {
+    facilityList = facilities.split(',').map(f => f.trim());
+  } else if (Array.isArray(facilities)) {
+    facilityList = facilities;
+  }
+
+  const shortenFacilityName = (name) => {
+    if (name.length > 20) {
+      return name.substring(0, 18) + '...';
+    }
+    return name;
+  };
+
+  const displayFacilities = facilityList.slice(0, 3);
+  const remainingCount = facilityList.length - 3;
+
+  return (
+    <div style={{
+      marginTop: 12,
+      paddingTop: 8,
+      borderTop: "1px solid #f0f0f0",
+      minHeight: 40
+    }}>
+      <Space size={8} wrap>
+        {displayFacilities.map((facility, idx) => (
+          <Tooltip key={idx} title={facility}>
+            <Tag
+              style={{
+                fontSize: "11px",
+                borderRadius: "4px",
+                margin: 0,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4
+              }}
+            >
+              <span>{shortenFacilityName(facility)}</span>
+            </Tag>
+          </Tooltip>
+        ))}
+        {remainingCount > 0 && (
+          <Tooltip title={facilityList.slice(3).join(', ')}>
+            <Tag style={{ fontSize: "11px", borderRadius: "4px", background: "#f0f0f0", cursor: "pointer" }}>
+              +{remainingCount}
+            </Tag>
+          </Tooltip>
+        )}
+      </Space>
+    </div>
+  );
+};
 
 const KostList = () => {
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState("");
-  const [filterKost, setFilterKost] = useState(null);
-  const [filterLantai, setFilterLantai] = useState(null);
-  const [filterKamar, setFilterKamar] = useState(null);
+  const [filterTipe, setFilterTipe] = useState(null);
+  const [filterHarga, setFilterHarga] = useState(null);
+  const [favorites, setFavorites] = useState([]);
+  const [dataSource, setDataSource] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const sessionData = localStorage.getItem("session");
-  const userRole = sessionData ? JSON.parse(sessionData).roleName : "Guest";
-  const isAdminOrOwner = userRole === "Admin" || userRole === "Owner";
+  // Listen untuk filter dari LayoutHeader
+  useEffect(() => {
+    const handleFilterChange = (event) => {
+      setSearchText(event.detail.searchText || "");
+      setFilterTipe(event.detail.filterTipe || null);
+      setFilterHarga(event.detail.filterHarga || null);
+    };
 
-  const dataSource = [
-    {
-      key: "5",
-      nama: "Kost Bahagia 1",
-      alamat: "Jl. Mawar No. 10, Jakarta Pusat",
-      tipe: "Putra",
-      lantai: "1",
-      kategoriKamar: "reguler",
-      harga: 1500000,
-      status: "Tersedia",
-      coords: [-6.1847, 106.8302],
-      image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=400",
-    },
-    {
-      key: "2",
-      nama: "Kost Melati 5",
-      alamat: "Jl. Melati No. 05, Surabaya",
-      tipe: "Putri",
-      lantai: "2",
-      kategoriKamar: "vip",
-      harga: 2000000,
-      status: "Penuh",
-      coords: [-7.2575, 112.7521],
-      image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=400",
-    },
-    {
-      key: "3",
-      nama: "Kost Exclusive Menteng",
-      alamat: "Jl. Menteng Raya No. 12, Jakarta",
-      tipe: "Campur",
-      lantai: "3",
-      kategoriKamar: "vvip",
-      harga: 3500000,
-      status: "Tersedia",
-      coords: [-6.1915, 106.8331],
-      image: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?q=80&w=400",
-    },
-  ];
+    window.addEventListener('kostFilterChange', handleFilterChange);
+
+    return () => {
+      window.removeEventListener('kostFilterChange', handleFilterChange);
+    };
+  }, []);
+
+  const fetchKostData = async () => {
+    setLoading(true);
+    try {
+      const res = await listKost();
+      const resData = res?.data?.data || res?.data || (Array.isArray(res) ? res : []);
+      const data = resData.map((item) => ({
+        key: item.room_kost_id?.toString() || Math.random().toString(),
+        nama: item.nama_kost,
+        alamat: item.address,
+        tipe: item.tipe_kost,
+        lantai: item.lantai,
+        kategoriKamar: item.kategori_kamar,
+        harga: item.harga ? parseFloat(item.harga) : 0,
+        status: item.status,
+        image: item.photo_kost,
+        fasilitas: item.fasilitas
+      }));
+      setDataSource(data);
+    } catch (error) {
+      message.error('Gagal memuat data kost');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchKostData();
+  }, []);
 
   const filteredData = dataSource.filter((item) => {
-    const matchesSearch =
-      item.nama.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.alamat.toLowerCase().includes(searchText.toLowerCase());
-    const matchesKost = filterKost ? item.nama.toLowerCase().includes(filterKost.toLowerCase()) : true;
-    const matchesLantai = filterLantai ? item.lantai === filterLantai : true;
-    const matchesKamar = filterKamar ? item.kategoriKamar === filterKamar : true;
-    return matchesSearch && matchesKost && matchesLantai && matchesKamar;
+    const matchSearch = !searchText ||
+      item.nama?.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.alamat?.toLowerCase().includes(searchText.toLowerCase());
+    const matchTipe = !filterTipe ||
+      (item.tipe && item.tipe.trim().toLowerCase() === filterTipe.trim().toLowerCase());
+    const matchHarga = !filterHarga ||
+      (filterHarga === "under500" && item.harga < 500000) ||
+      (filterHarga === "500-1m" && item.harga >= 500000 && item.harga <= 1000000) ||
+      (filterHarga === "above1m" && item.harga > 1000000);
+    return matchSearch && matchTipe && matchHarga;
   });
 
   const handleDetail = (item) => {
     navigate(`/detail-kost/${item.key}`, { state: { kost: item } });
   };
 
+  const handleFavorite = (key, e) => {
+    e.stopPropagation();
+    setFavorites(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+    message.success(favorites.includes(key) ? 'Dihapus dari favorit' : 'Ditambahkan ke favorit');
+  };
+
   const getTipeColor = (tipe) => {
-    return tipe === "Putra" ? "blue" : tipe === "Putri" ? "magenta" : "purple";
+    if (!tipe) return "default";
+    const tipeLower = tipe.toLowerCase();
+    if (tipeLower === "putra") return "blue";
+    if (tipeLower === "putri") return "pink";
+    if (tipeLower === "campur") return "green";
+    return "default";
   };
 
   return (
-    <div style={{ padding: "24px" }}>
-      {/* Header & Search Bar (Tetap di Atas) */}
-      <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
-        <div>
-          <Title level={2} style={{ margin: 0 }}>Eksplorasi Kost</Title>
-          <Text type="secondary">Cari hunian impianmu di peta</Text>
-        </div>
-        <Space size="middle" wrap>
-          <Input
-            prefix={<SearchOutlined />}
-            placeholder="Cari lokasi..."
-            style={{ width: 200 }}
-            size="large"
-            allowClear
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-          <Select placeholder="Kost" style={{ width: 120 }} size="large" allowClear onChange={setFilterKost}>
-            <Option value="Bahagia">Bahagia</Option>
-            <Option value="Melati">Melati</Option>
-            <Option value="Menteng">Menteng</Option>
-          </Select>
-          <Select placeholder="Lantai" style={{ width: 100 }} size="large" allowClear onChange={setFilterLantai}>
-            <Option value="1">Lantai 1</Option>
-            <Option value="2">Lantai 2</Option>
-            <Option value="3">Lantai 3</Option>
-          </Select>
-          {isAdminOrOwner && (
-            <Button type="primary" icon={<PlusOutlined />} size="large">Tambah</Button>
-          )}
-        </Space>
-      </div>
-
-      <Row gutter={[24, 24]}>
-        {/* KOLOM KIRI: DAFTAR KOST */}
-        <Col xs={24} lg={14} xl={15}>
-          <List
-            grid={{ gutter: 16, xs: 1, sm: 2, md: 2, lg: 2, xl: 2 }}
-            dataSource={filteredData}
-            renderItem={(item) => (
-              <List.Item>
-                <Badge.Ribbon text={item.status} color={item.status === "Tersedia" ? "green" : "volcano"}>
-                  <Card
-                    hoverable
-                    cover={<img alt={item.nama} src={item.image} style={{ height: 160, objectFit: "cover" }} onClick={() => handleDetail(item)} />}
-                    actions={[
-                      isAdminOrOwner && <EditOutlined key="edit" />,
-                      <InfoCircleOutlined key="detail" onClick={() => handleDetail(item)} />,
-                      isAdminOrOwner && <DeleteOutlined key="delete" style={{ color: "#ff4d4f" }} />,
-                    ].filter(Boolean)}
+    <div style={{
+      padding: "16px 24px 24px 24px",
+      background: "#f0f2f5",
+      minHeight: "calc(100vh - 120px)"
+    }}>
+      <Spin spinning={loading}>
+        <Row gutter={[16, 16]}>
+          <Col xs={24} lg={24} xl={24}>
+            {filteredData.length === 0 ? (
+              <Card style={{ textAlign: "center", padding: "40px" }}>
+                <Empty description="Tidak ada kost yang ditemukan" />
+              </Card>
+            ) : (
+              <div style={{ display: 'flex', flexWrap: 'wrap', margin: '-8px' }}>
+                {filteredData.map((item) => (
+                  <div
+                    key={item.key}
+                    style={{
+                      width: 'calc(33.333% - 16px)',
+                      margin: '8px',
+                      flexShrink: 0
+                    }}
                   >
-                    <div onClick={() => handleDetail(item)}>
-                      <Tag color={getTipeColor(item.tipe)}>{item.tipe.toUpperCase()}</Tag>
-                      <Text strong style={{ float: 'right', color: '#1890ff' }}>Rp {formatIDR(item.harga)}</Text>
-                      <Title level={5} style={{ margin: "8px 0 0" }}>{item.nama}</Title>
-                      <Text type="secondary" size="small" ellipsis><EnvironmentOutlined /> {item.alamat}</Text>
-                    </div>
-                  </Card>
-                </Badge.Ribbon>
-              </List.Item>
+                    <Badge.Ribbon
+                      text={item.status}
+                      color={item.status === "Tersedia" ? "green" : "red"}
+                    >
+                      <Card
+                        hoverable
+                        style={{
+                          borderRadius: "12px",
+                          overflow: "hidden",
+                          height: "100%",
+                        }}
+                        bodyStyle={{ padding: "16px" }}
+                        cover={
+                          <div style={{ height: 200, overflow: "hidden" }}>
+                            <img
+                              alt={item.nama}
+                              src={item.image || "https://placehold.co/400x200?text=Kost"}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                cursor: "pointer",
+                                transition: "transform 0.3s ease"
+                              }}
+                              onClick={() => handleDetail(item)}
+                            />
+                          </div>
+                        }
+                        actions={[
+                          <Tooltip title="Lihat Detail">
+                            <EyeOutlined onClick={() => handleDetail(item)} />
+                          </Tooltip>,
+                          <Tooltip title={favorites.includes(item.key) ? "Hapus favorit" : "Tambah favorit"}>
+                            {favorites.includes(item.key) ?
+                              <HeartFilled style={{ color: "#ff4d4f" }} onClick={(e) => handleFavorite(item.key, e)} /> :
+                              <HeartOutlined onClick={(e) => handleFavorite(item.key, e)} />
+                            }
+                          </Tooltip>,
+                        ]}
+                      >
+                        <div onClick={() => handleDetail(item)} style={{ cursor: "pointer" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8, gap: 8 }}>
+                            <Tag color={getTipeColor(item.tipe)} style={{ margin: 0 }}>
+                              {item.tipe}
+                            </Tag>
+                            <Text strong style={{ color: "#1890ff", whiteSpace: "nowrap" }}>
+                              Rp {formatIDR(item.harga)}
+                              <span style={{ fontSize: "11px", fontWeight: "normal" }}>/bln</span>
+                            </Text>
+                          </div>
+                          <Title level={5} style={{ margin: "8px 0 4px", fontSize: "16px", minHeight: "48px" }}>
+                            {item.nama}
+                          </Title>
+                          <Text
+                            type="secondary"
+                            style={{
+                              fontSize: "12px",
+                              display: "flex",
+                              alignItems: "flex-start",
+                              gap: 4,
+                              minHeight: "40px"
+                            }}
+                          >
+                            <EnvironmentOutlined style={{ flexShrink: 0, marginTop: "2px" }} />
+                            <span style={{ wordBreak: "break-word", lineHeight: "1.4" }}>{item.alamat}</span>
+                          </Text>
+                          <FacilitiesDisplay facilities={item.fasilitas} />
+                        </div>
+                      </Card>
+                    </Badge.Ribbon>
+                  </div>
+                ))}
+              </div>
             )}
-          />
-        </Col>
+          </Col>
+        </Row>
+      </Spin>
 
-        <Col xs={24} lg={10} xl={9}>
-          <div style={{
-            position: "sticky",
-            top: 24,
-            height: "calc(100vh - 48px)",
-            borderRadius: "12px",
-            overflow: "hidden",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
-          }}>
-            <MapContainer
-              center={[-6.2000, 106.8166]}
-              zoom={11}
-              style={{ height: "100%", width: "100%" }}
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              {filteredData.map((item) => (
-                <Marker key={item.key} position={item.coords}>
-                  <Popup>
-                    <strong>{item.nama}</strong><br />
-                    {item.alamat}<br />
-                    <Button type="link" size="small" onClick={() => handleDetail(item)}>Lihat Detail</Button>
-                  </Popup>
-                </Marker>
-              ))}
-            </MapContainer>
-          </div>
-        </Col>
-      </Row>
+      <style>
+        {`
+          @media (max-width: 768px) {
+            div[style*="width: calc(33.333%"] {
+              width: calc(50% - 16px) !important;
+            }
+          }
+          @media (max-width: 576px) {
+            div[style*="width: calc(33.333%"] {
+              width: calc(100% - 16px) !important;
+            }
+          }
+        `}
+      </style>
     </div>
   );
 };

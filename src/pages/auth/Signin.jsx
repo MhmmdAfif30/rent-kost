@@ -3,6 +3,7 @@ import { Flex, Input, Form, Button, Card, Space, Image } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { NotifAlert } from '../../components/Global/ToastNotif';
 import { SendRequest } from '../../components/Global/ApiRequest';
+import {encryptData}  from '../../components/Global/Formatter'
 import bg_cod from '../../assets/kost.inn.jpeg';
 import logo from '../../assets/freepik/logo-kost.inn.jpeg';
 
@@ -45,57 +46,84 @@ const SignIn = () => {
         fetchCaptcha();
     }, []);
 
-    const handleOnSubmit = async (values) => {
-        setLoading(true);
-        try {
-            const res = await SendRequest({
-    method: 'post',
-    prefix: 'auth/login',
-    params: {
-        identifier: values.identifier,
-        password: values.password,
-        captcha: values.captcha,
-        captchaText: captchaText,
-    },
-    withCredentials: true,
-});
+ const handleOnSubmit = async (values) => {
+    setLoading(true);
+    try {
+        const res = await SendRequest({
+            method: 'post',
+            prefix: 'auth/login',
+            params: {
+                identifier: values.identifier,
+                password: values.password,
+                captcha: values.captcha,
+                captchaText: captchaText,
+            },
+            withCredentials: true,
+        });
 
-            const user = res?.data?.data?.user || res?.user;
-            const accessToken = res?.data?.data?.accessToken || res?.tokens?.accessToken;
+        const user = res?.data?.data?.user || res?.user;
+        const accessToken = res?.data?.data?.accessToken || res?.tokens?.accessToken;
 
-            if (user && accessToken) {
-                localStorage.setItem('token', accessToken);
-                localStorage.setItem('user', JSON.stringify(user));
+        if (user && accessToken) {
+            localStorage.clear();
 
-                NotifAlert({
-                    icon: 'success',
-                    title: 'Login Berhasil',
-                    message: res?.message || 'Selamat datang!',
-                });
+            localStorage.setItem('token', accessToken);
 
-                navigate('/detail-kost');
+            localStorage.setItem('user', JSON.stringify(user));
+
+            const sessionData = {
+                userId: user.user_id || user.id,
+                roleName: user.role_name || user.roleName || user.role,
+                email: user.email,
+                name: user.name || user.full_name,
+                user: user // Simpan full user data jika diperlukan
+            };
+
+            const encryptedSession = encryptData(sessionData);
+            if (encryptedSession) {
+                localStorage.setItem('session', encryptedSession);
             }
-        } catch (err) {
-            // hanya handle invalid captcha disini
-            if (err?.response?.data?.message?.toLowerCase().includes('captcha')) {
-                NotifAlert({
-                    icon: 'warning',
-                    title: 'Peringatan',
-                    message: 'Invalid captcha',
-                });
-                fetchCaptcha();
+
+            // === TAMBAHKAN INI ===
+            // Trigger event untuk memberitahu MainLayout bahwa login berhasil
+            window.dispatchEvent(new Event('authChange'));
+            console.log('Login success, authChange event dispatched'); // Debug
+
+            NotifAlert({
+                icon: 'success',
+                title: 'Login Berhasil',
+                message: res?.message || 'Selamat datang!',
+            });
+
+            const role = (sessionData.roleName || '').toLowerCase();
+            if (role === 'admin' || role === 'super admin' || role === 'owner') {
+                navigate('/kost');
             } else {
-                NotifAlert({
-                    icon: 'error',
-                    title: 'Login Gagal',
-                    message: err?.message || 'Terjadi kesalahan',
-                });
-                fetchCaptcha();
+                navigate('/dahboard'); // Perhatikan typo: 'dahboard' seharusnya 'dashboard'
             }
-        } finally {
-            setLoading(false);
+        } else {
+            throw new Error('Invalid response from server');
         }
-    };
+    } catch (err) {
+        if (err?.response?.data?.message?.toLowerCase().includes('captcha')) {
+            NotifAlert({
+                icon: 'warning',
+                title: 'Peringatan',
+                message: 'Invalid captcha',
+            });
+            fetchCaptcha();
+        } else {
+            NotifAlert({
+                icon: 'error',
+                title: 'Login Gagal',
+                message: err?.message || 'Terjadi kesalahan',
+            });
+            fetchCaptcha();
+        }
+    } finally {
+        setLoading(false);
+    }
+};
 
     return (
         <Flex

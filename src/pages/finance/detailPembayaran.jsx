@@ -14,8 +14,8 @@ import {
 } from 'antd';
 import { SyncOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { NotifAlert, NotifOk } from '../../components/Global/ToastNotif';
-import { 
-    createPembayaran, 
+import {
+    createPembayaran,
     updatePembayaran,
     syncPaymentStatus,
 } from '../../api/pembayaran';
@@ -49,13 +49,12 @@ const DetailPembayaran = (props) => {
 
     const [formData, setFormData] = useState(defaultData);
 
-    // Props yang diterima
-    const { 
-        showModal, 
-        setShowModal, 
-        selectedData, 
-        setSelectedData, 
-        actionMode, 
+    const {
+        showModal,
+        setShowModal,
+        selectedData,
+        setSelectedData,
+        actionMode,
         setActionMode,
         readOnly,
         onClose,
@@ -72,7 +71,6 @@ const DetailPembayaran = (props) => {
         if (onClose) onClose();
     };
 
-    // Handle Sync Status (manual)
     const handleSyncStatus = async () => {
         if (!formData.order_id) {
             NotifAlert({
@@ -85,13 +83,13 @@ const DetailPembayaran = (props) => {
 
         setSyncLoading(true);
         setSyncResult(null);
-        
+
         try {
             const response = await syncPaymentStatus(formData.order_id);
-            
+
             if (response && response.statusCode === 200) {
                 const data = response.data || {};
-                
+
                 setSyncResult({
                     success: true,
                     message: 'Status payment berhasil disinkronkan',
@@ -103,7 +101,7 @@ const DetailPembayaran = (props) => {
                     title: 'Sync Berhasil',
                     message: `Status payment: ${data.current_status?.toUpperCase() || 'Success'}`,
                 });
-                
+
                 setFormData(prev => ({
                     ...prev,
                     previous_status: data.previous_status || prev.previous_status,
@@ -111,7 +109,7 @@ const DetailPembayaran = (props) => {
                     midtrans_status: data.midtrans_status || prev.midtrans_status,
                     fraud_status: data.fraud_status || prev.fraud_status,
                 }));
-                
+
                 if (onRefresh) onRefresh();
             } else {
                 setSyncResult({
@@ -127,7 +125,7 @@ const DetailPembayaran = (props) => {
             }
         } catch (error) {
             console.error('Sync Status Error:', error);
-            
+
             setSyncResult({
                 success: false,
                 message: error.message || 'Terjadi kesalahan saat sinkronisasi',
@@ -208,11 +206,10 @@ const DetailPembayaran = (props) => {
                     message: `Data Payment berhasil ${formData.payments_id ? 'disinkronkan' : 'ditambahkan'}.`,
                 });
 
-                // Refresh data invoices setelah save
                 await fetchInvoices();
-                
+
                 if (onRefresh) onRefresh();
-                
+
                 if (actionMode === 'add') {
                     setActionMode('list');
                     setShowModal(false);
@@ -229,7 +226,7 @@ const DetailPembayaran = (props) => {
             }
         } catch (error) {
             console.error('Save Payment Error:', error);
-            
+
             setSyncResult({
                 success: false,
                 message: error.message || 'Terjadi kesalahan pada server.',
@@ -267,18 +264,17 @@ const DetailPembayaran = (props) => {
         });
     };
 
-    // Fetch daftar invoices dengan useCallback agar bisa dipanggil ulang
     const fetchInvoices = useCallback(async () => {
         setLoadingInvoices(true);
         try {
             const queryParams = new URLSearchParams();
             const response = await getData(queryParams);
-            
+
             if (response && response.data) {
                 const mappedInvoices = response.data.map(invoice => ({
                     invoices_id: invoice.id || invoice.invoices_id,
-                    label: invoice.label || 
-                           `${invoice.invoice_number || 'INV-' + (invoice.id || invoice.invoices_id)} - ${invoice.customer_name || 'Customer'}`
+                    label: invoice.label ||
+                        `${invoice.invoice_number || 'INV-' + (invoice.id || invoice.invoices_id)} - ${invoice.customer_name || 'Customer'}`
                 }));
                 setInvoices(mappedInvoices);
             } else {
@@ -295,9 +291,9 @@ const DetailPembayaran = (props) => {
         } finally {
             setLoadingInvoices(false);
         }
-    }, [getData]); // Tambahkan dependency getData
+    }, [getData]);
 
-    // Fetch ketika modal terbuka dan mode add/edit
+
     useEffect(() => {
         if (showModal && (actionMode === 'add' || actionMode === 'edit')) {
             fetchInvoices();
@@ -323,14 +319,8 @@ const DetailPembayaran = (props) => {
         }
     }, [showModal, selectedData, actionMode]);
 
-    // Payment type options
     const paymentTypeOptions = [
-        { value: 'transfer', label: 'Transfer Bank' },
-        { value: 'cash', label: 'Cash' },
-        { value: 'credit_card', label: 'Credit Card' },
-        { value: 'e_wallet', label: 'E-Wallet' },
         { value: 'virtual_account', label: 'Virtual Account' },
-        { value: 'retail', label: 'Retail Outlet' },
     ];
 
     const isReadOnly = readOnly || actionMode === 'detail';
@@ -357,13 +347,12 @@ const DetailPembayaran = (props) => {
 
     return (
         <Modal
-            title={`${
-                actionMode === 'add'
+            title={`${actionMode === 'add'
                     ? 'Tambah'
                     : actionMode === 'detail'
-                      ? 'Detail'
-                      : 'Edit'
-            } Payment`}
+                        ? 'Detail'
+                        : 'Edit'
+                } Payment`}
             open={showModal}
             onCancel={handleCancel}
             width={750}
@@ -384,7 +373,7 @@ const DetailPembayaran = (props) => {
                                 },
                             }}
                         >
-                            <Button 
+                            <Button
                                 icon={<SyncOutlined spin={syncLoading} />}
                                 loading={syncLoading}
                                 onClick={handleSyncStatus}
@@ -394,7 +383,7 @@ const DetailPembayaran = (props) => {
                             </Button>
                         </ConfigProvider>
                     )}
-                    
+
                     <ConfigProvider
                         theme={{
                             token: { colorBgContainer: '#E9F6EF' },
@@ -430,8 +419,8 @@ const DetailPembayaran = (props) => {
                                 },
                             }}
                         >
-                            <Button 
-                                loading={confirmLoading} 
+                            <Button
+                                loading={confirmLoading}
                                 onClick={handleSave}
                                 icon={formData.payments_id ? <SyncOutlined /> : null}
                             >
@@ -443,7 +432,7 @@ const DetailPembayaran = (props) => {
             ]}
         >
             <Divider />
-            
+
             {syncResult && (
                 <Alert
                     message={syncResult.success ? 'Sync Berhasil' : 'Sync Gagal'}

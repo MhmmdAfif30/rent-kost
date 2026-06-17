@@ -192,12 +192,11 @@ const ListPembayaran = memo(function ListPembayaran(props) {
         }
     };
 
-    // Handler untuk menutup modal DetailPembayaran
     const handleDetailModalClose = () => {
         setShowDetailModal(false);
         setSelectedData(null);
         setActionMode('list');
-        doFilter(); // Refresh data setelah modal ditutup
+        doFilter();
     };
 
     return (
@@ -282,7 +281,6 @@ const ListPembayaran = memo(function ListPembayaran(props) {
                 </Row>
             </Card>
 
-            {/* DetailPembayaran Modal */}
             <DetailPembayaran
                 showModal={showDetailModal}
                 setShowModal={setShowDetailModal}

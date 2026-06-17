@@ -37,16 +37,15 @@ const createPembayaran = async (queryParams) => {
     return response.data;
 };
 
-const updatePembayaran = async (id, payload) => {
+ const updatePembayaran = async (id) => {
+
     const response = await SendRequest({
-        method: 'put',
-        prefix: `payments/:${id}`,
-        params: payload, 
+        method: 'post',
+        prefix: `payments/sync/${id}`,
     });
 
     return response.data;
 };
-
 
  const syncPaymentStatus = async (orderId) => {
     const response = await SendRequest({

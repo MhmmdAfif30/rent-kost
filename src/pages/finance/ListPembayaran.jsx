@@ -57,28 +57,6 @@ const columns = (showPreviewModal, showEditModal, showDeleteDialog) => [
         },
     },
     {
-        title: 'Approval Status',
-        dataIndex: 'is_approve',
-        key: 'is_approve',
-        width: '15%',
-        align: 'center',
-        render: (value) => (
-            <Tag color={value === true || value === 1 ? 'success' : 'warning'}>
-                {value === true || value === 1 ? (
-                    <Space>
-                        <CheckCircleOutlined />
-                        Approved
-                    </Space>
-                ) : (
-                    <Space>
-                        <CloseCircleOutlined />
-                        Pending
-                    </Space>
-                )}
-            </Tag>
-        ),
-    },
-    {
         title: 'Status',
         dataIndex: 'is_active',
         key: 'is_active',

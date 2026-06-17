@@ -49,6 +49,7 @@ const DetailPembayaran = (props) => {
 
     const [formData, setFormData] = useState(defaultData);
 
+    // Props yang diterima
     const { 
         showModal, 
         setShowModal, 
@@ -71,6 +72,7 @@ const DetailPembayaran = (props) => {
         if (onClose) onClose();
     };
 
+    // Handle Sync Status (manual)
     const handleSyncStatus = async () => {
         if (!formData.order_id) {
             NotifAlert({
@@ -166,6 +168,7 @@ const DetailPembayaran = (props) => {
             const payload = {
                 invoices_id: parseInt(formData.invoices_id),
                 type_payment: formData.type_payment,
+                is_approve: formData.is_approve || false,
                 is_active: formData.is_active || true,
                 order_id: formData.order_id || undefined,
                 orderId: formData.order_id || undefined,
@@ -305,6 +308,7 @@ const DetailPembayaran = (props) => {
         if (showModal && selectedData) {
             setFormData({
                 ...selectedData,
+                is_approve: selectedData.is_approve === true || selectedData.is_approve === 1,
                 is_active: selectedData.is_active === true || selectedData.is_active === 1,
                 order_id: selectedData.order_id || selectedData.orderId || '',
                 previous_status: selectedData.previous_status || '',

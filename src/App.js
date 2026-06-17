@@ -8,6 +8,7 @@ import Home from "./pages/home/Home";
 import KostList from "../src/pages/kost/ListKost";
 import DetailKost from "./pages/kost/DetailKost";
 import Login from "./pages/auth/Signin";
+import ListPembayaran from "./pages/finance/ListPembayaran";
 
 const App = () => {
     return (
@@ -22,6 +23,7 @@ const App = () => {
                         <Route index element={<Navigate to="/kost" replace />} />
                         <Route path="kost" element={<KostList />} />
                         <Route path="detail-kost/:id" element={<DetailKost />} />
+                        <Route path="list-pembayaran" element={<ListPembayaran />} />
                         <Route path="home" element={<Home />} />
                     </Route>
 

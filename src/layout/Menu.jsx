@@ -53,7 +53,7 @@ const allItems = [
             {
                 key: 'pembayaran',
                 icon: <BankOutlined style={{ fontSize: '19px' }} />,
-                label: <Link to="/finance/pembayaran">Pembayaran</Link>,
+                label: <Link to="/list-pembayaran">Pembayaran</Link>,
             },
             {
                 key: 'laporan',

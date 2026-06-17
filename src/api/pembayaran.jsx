@@ -17,6 +17,7 @@ const detailPembayaran = async (id) => {
 
     return response.data;
 };
+
 const deletePembayaran = async (id) => {
     const response = await SendRequest({
         method: 'delete',
@@ -26,5 +27,34 @@ const deletePembayaran = async (id) => {
     return response.data;
 };
 
+const createPembayaran = async (queryParams) => {
+    const response = await SendRequest({
+        method: 'post',
+        prefix: `payments`,
+        params: queryParams,
+    });
 
-export { listPembayaran, detailPembayaran, deletePembayaran};
+    return response.data;
+};
+
+const updatePembayaran = async (id, payload) => {
+    const response = await SendRequest({
+        method: 'put',
+        prefix: `payments/:${id}`,
+        params: payload, 
+    });
+
+    return response.data;
+};
+
+
+ const syncPaymentStatus = async (orderId) => {
+    const response = await SendRequest({
+        method: 'post',
+        prefix: `payments/sync/${orderId}`,
+    });
+
+    return response.data;
+};
+
+export { listPembayaran, detailPembayaran, deletePembayaran, createPembayaran, updatePembayaran, syncPaymentStatus };

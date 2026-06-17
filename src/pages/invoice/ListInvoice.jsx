@@ -6,14 +6,11 @@ import {
     DeleteOutlined,
     EyeOutlined,
     SearchOutlined,
-    CheckCircleOutlined,
-    CloseCircleOutlined,
 } from '@ant-design/icons';
 import { NotifAlert, NotifOk, NotifConfirmDialog } from '../../components/Global/ToastNotif';
 import { useNavigate } from 'react-router-dom';
-import { listPembayaran, detailPembayaran, deletePembayaran } from '../../api/pembayaran';
+import { listInvoices, detailInvoices, deleteInvoices } from '../../api/invoice';
 import TableList from '../../components/Global/TableList';
-import DetailPembayaran from './detailPembayaran';
 
 const columns = (showPreviewModal, showEditModal, showDeleteDialog) => [
     {
@@ -24,71 +21,118 @@ const columns = (showPreviewModal, showEditModal, showDeleteDialog) => [
         render: (_, __, index) => index + 1,
     },
     {
-        title: 'Invoice ID',
-        dataIndex: 'invoices_id',
-        key: 'invoices_id',
-        width: '15%',
-        ellipsis: true,
+        title: 'Due Date Status',
+        dataIndex: 'is_due_date',
+        key: 'is_due_date',
+        width: '12%',
+        align: 'center',
         render: (value) => (
-            <Tag color="blue">
-                INV-{String(value).padStart(3, '0')}
+            <Tag color={value === 1 ? 'red' : 'green'}>
+                {value === 1 ? 'Due' : 'Not Due'}
             </Tag>
         ),
     },
     {
-        title: 'Type Payment',
-        dataIndex: 'type_payment',
-        key: 'type_payment',
-        width: '15%',
+        title: 'Amount',
+        dataIndex: 'amount',
+        key: 'amount',
+        width: '12%',
+        align: 'right',
         render: (value) => {
-            const colors = {
-                transfer: 'blue',
-                cash: 'green',
-                credit_card: 'purple',
-                e_wallet: 'orange',
-                virtual_account: 'cyan',
-                retail: 'magenta',
-            };
-            return (
-                <Tag color={colors[value?.toLowerCase()] || 'default'}>
-                    {value?.toUpperCase() || '-'}
-                </Tag>
-            );
+            if (value) {
+                return new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR',
+                    minimumFractionDigits: 0,
+                }).format(parseFloat(value));
+            }
+            return '-';
         },
     },
     {
-        title: 'Approval Status',
-        dataIndex: 'is_approve',
-        key: 'is_approve',
-        width: '15%',
+        title: 'Quantity',
+        dataIndex: 'quantity',
+        key: 'quantity',
+        width: '8%',
         align: 'center',
-        render: (value) => (
-            <Tag color={value === true || value === 1 ? 'success' : 'warning'}>
-                {value === true || value === 1 ? (
-                    <Space>
-                        <CheckCircleOutlined />
-                        Approved
-                    </Space>
-                ) : (
-                    <Space>
-                        <CloseCircleOutlined />
-                        Pending
-                    </Space>
-                )}
-            </Tag>
-        ),
+    },
+    {
+        title: 'Fee',
+        dataIndex: 'fee',
+        key: 'fee',
+        width: '10%',
+        align: 'right',
+        render: (value) => {
+            if (value) {
+                return new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR',
+                    minimumFractionDigits: 0,
+                }).format(parseFloat(value));
+            }
+            return '-';
+        },
+    },
+    {
+        title: 'Total',
+        dataIndex: 'total',
+        key: 'total',
+        width: '12%',
+        align: 'right',
+        render: (value) => {
+            if (value) {
+                return new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR',
+                    minimumFractionDigits: 0,
+                }).format(parseFloat(value));
+            }
+            return '-';
+        },
     },
     {
         title: 'Status',
         dataIndex: 'is_active',
         key: 'is_active',
-        width: '10%',
+        width: '8%',
         align: 'center',
         render: (value) => (
-            <Tag color={value === true || value === 1 ? 'green' : 'default'}>
-                {value === true || value === 1 ? 'Active' : 'Inactive'}
+            <Tag color={value === 1 ? 'green' : 'default'}>
+                {value === 1 ? 'Active' : 'Inactive'}
             </Tag>
         ),
+    },
+    {
+        title: 'Start Date',
+        dataIndex: 'start_date',
+        key: 'start_date',
+        width: '12%',
+        render: (value) => {
+            if (value) {
+                return new Date(value).toLocaleString('id-ID', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                });
+            }
+            return '-';
+        },
+    },
+    {
+        title: 'End Date',
+        dataIndex: 'end_date',
+        key: 'end_date',
+        width: '12%',
+        render: (value) => {
+            if (value) {
+                return new Date(value).toLocaleString('id-ID', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                });
+            }
+            return '-';
+        },
     },
     {
         title: 'Action',
@@ -121,17 +165,12 @@ const columns = (showPreviewModal, showEditModal, showDeleteDialog) => [
     },
 ];
 
-const ListPembayaran = memo(function ListPembayaran(props) {
+const ListInvoices = memo(function ListInvoices(props) {
     const [trigerFilter, setTrigerFilter] = useState(false);
     const defaultFilter = { criteria: '' };
     const [formDataFilter, setFormDataFilter] = useState(defaultFilter);
     const [searchValue, setSearchValue] = useState('');
     const navigate = useNavigate();
-
-    // State untuk DetailPembayaran
-    const [showDetailModal, setShowDetailModal] = useState(false);
-    const [selectedData, setSelectedData] = useState(null);
-    const [actionMode, setActionMode] = useState('list'); // 'list', 'add', 'edit', 'detail'
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -161,48 +200,45 @@ const ListPembayaran = memo(function ListPembayaran(props) {
     };
 
     const showPreviewModal = (param) => {
-        setSelectedData(param);
-        setActionMode('detail');
-        setShowDetailModal(true);
+        props.setSelectedData(param);
+        props.setActionMode('preview');
     };
 
-    const showEditModal = (param) => {
-        setSelectedData(param);
-        setActionMode('edit');
-        setShowDetailModal(true);
+    const showEditModal = (param = null) => {
+        props.setSelectedData(param);
+        props.setActionMode('edit');
     };
 
-    const showAddModal = () => {
-        setSelectedData(null);
-        setActionMode('add');
-        setShowDetailModal(true);
+    const showAddModal = (param = null) => {
+        props.setSelectedData(param);
+        props.setActionMode('add');
     };
 
     const showDeleteDialog = (param) => {
         NotifConfirmDialog({
             icon: 'question',
             title: 'Konfirmasi Hapus',
-            message: `Payment dengan Invoice ID "${param.invoices_id}" akan dihapus?`,
-            onConfirm: () => handleDelete(param.payments_id, param.invoices_id),
-            onCancel: () => setSelectedData(null),
+            message: `Invoice dengan ID "${param.invoices_id}" akan dihapus?`,
+            onConfirm: () => handleDelete(param.invoices_id, param.invoices_id),
+            onCancel: () => props.setSelectedData(null),
         });
     };
 
-    const handleDelete = async (payments_id, invoices_id) => {
+    const handleDelete = async (invoices_id, invoiceId) => {
         try {
-            const response = await deletePembayaran(payments_id);
+            const response = await deleteInvoices(invoices_id);
             if (response.statusCode === 200) {
                 NotifAlert({
                     icon: 'success',
                     title: 'Berhasil',
-                    message: `Data Payment untuk Invoice "${invoices_id}" berhasil dihapus.`,
+                    message: `Data Invoice "${invoiceId}" berhasil dihapus.`,
                 });
                 doFilter();
             } else {
                 NotifOk({
                     icon: 'error',
                     title: 'Gagal',
-                    message: response.message || 'Gagal Menghapus Data Payment',
+                    message: response.message || 'Gagal Menghapus Data Invoice',
                 });
             }
         } catch (error) {
@@ -214,14 +250,6 @@ const ListPembayaran = memo(function ListPembayaran(props) {
         }
     };
 
-    // Handler untuk menutup modal DetailPembayaran
-    const handleDetailModalClose = () => {
-        setShowDetailModal(false);
-        setSelectedData(null);
-        setActionMode('list');
-        doFilter(); // Refresh data setelah modal ditutup
-    };
-
     return (
         <React.Fragment>
             <Card>
@@ -230,7 +258,7 @@ const ListPembayaran = memo(function ListPembayaran(props) {
                         <Row justify="space-between" align="middle" gutter={[8, 8]}>
                             <Col xs={24} sm={24} md={12} lg={12}>
                                 <Input.Search
-                                    placeholder="Search payment by Invoice ID or Type Payment..."
+                                    placeholder="Search invoice by ID, User ID, or Room Kost ID..."
                                     value={searchValue}
                                     onChange={(e) => {
                                         const value = e.target.value;
@@ -277,7 +305,7 @@ const ListPembayaran = memo(function ListPembayaran(props) {
                                             onClick={() => showAddModal()}
                                             size="large"
                                         >
-                                            Add Payment
+                                            Add Invoice
                                         </Button>
                                     </ConfigProvider>
                                 </Space>
@@ -292,7 +320,7 @@ const ListPembayaran = memo(function ListPembayaran(props) {
                             showPreviewModal={showPreviewModal}
                             showEditModal={showEditModal}
                             showDeleteDialog={showDeleteDialog}
-                            getData={listPembayaran}
+                            getData={listInvoices}
                             queryParams={formDataFilter}
                             columns={columns(showPreviewModal, showEditModal, showDeleteDialog)}
                             triger={trigerFilter}
@@ -303,20 +331,8 @@ const ListPembayaran = memo(function ListPembayaran(props) {
                     </Col>
                 </Row>
             </Card>
-
-            {/* DetailPembayaran Modal */}
-            <DetailPembayaran
-                showModal={showDetailModal}
-                setShowModal={setShowDetailModal}
-                selectedData={selectedData}
-                setSelectedData={setSelectedData}
-                actionMode={actionMode}
-                setActionMode={setActionMode}
-                readOnly={actionMode === 'detail'}
-                onClose={handleDetailModalClose}
-            />
         </React.Fragment>
     );
 });
 
-export default ListPembayaran;
+export default ListInvoices;
